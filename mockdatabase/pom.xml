@@ -1,0 +1,64 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.mzapata</groupId>
+  <artifactId>mockdatabase</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>MockDatabase</name>
+  
+  <build>
+  	<plugins>
+  		<plugin>
+    		<groupId>org.apache.maven.plugins</groupId>
+    		<artifactId>maven-compiler-plugin</artifactId>
+    		<configuration>
+        		<source>1.6</source>
+        		<target>1.6</target>
+        		<showDeprecation>true</showDeprecation>
+        		<showWarnings>true</showWarnings>
+        		<executable>${env.JAVA_HOME_6}/bin/javac</executable>
+        		<fork>true</fork>
+    		</configuration>
+  		</plugin>
+  		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-eclipse-plugin</artifactId>
+			<configuration>
+				<ajdtVersion>none</ajdtVersion>
+			</configuration>
+		</plugin>
+  	</plugins>
+  </build>
+  
+  <dependencies>
+		
+  	<!-- Hibernate -->
+  	<dependency>
+		<groupId>org.hibernate</groupId>
+		<artifactId>hibernate-core</artifactId>
+		<version>4.2.4.Final</version>
+	</dependency>
+
+	<!-- H2 Database -->
+	<dependency>
+		<groupId>com.h2database</groupId>
+		<artifactId>h2</artifactId>
+		<version>1.4.187</version>
+	</dependency>
+	
+	<!-- Javax annotations -->
+	<dependency>
+		<groupId>javax.annotation</groupId>
+		<artifactId>jsr250-api</artifactId>
+		<version>1.0</version>
+	</dependency>
+	
+	<!-- JUnit -->
+	<dependency>
+		<groupId>junit</groupId>
+		<artifactId>junit</artifactId>
+		<version>4.11</version>
+		<scope>test</scope>
+	</dependency>
+	
+  </dependencies>
+</project>
