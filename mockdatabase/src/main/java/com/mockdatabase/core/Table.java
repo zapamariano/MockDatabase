@@ -58,8 +58,7 @@ public class Table<T, PK extends Serializable> {
 
 	@SuppressWarnings("unchecked")
 	public List<T> findAll() {
-		return Database.getSession()
-				.createQuery("from " + entityClass.getSimpleName()).list();
+		return Database.getSession().createQuery("from " + entityClass.getSimpleName()).list();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -70,14 +69,12 @@ public class Table<T, PK extends Serializable> {
 		if (whereClause.startsWith("where")) {
 			return session.createQuery(fromClause + " " + whereClause).list();
 		} else {
-			return session.createQuery(fromClause + " where " + whereClause)
-					.list();
+			return session.createQuery(fromClause + " where " + whereClause).list();
 		}
 	}
 
 	public long count() {
-		String query = "select count(e) from " + entityClass.getSimpleName()
-				+ " as e";
+		String query = "select count(e) from " + entityClass.getSimpleName() + " as e";
 		return (Long) Database.getSession().createQuery(query).uniqueResult();
 	}
 

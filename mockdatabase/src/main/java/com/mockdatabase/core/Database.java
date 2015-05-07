@@ -20,8 +20,7 @@ public class Database {
 
 	protected static void build() {
 		Configuration configuration = new Configuration();
-		configuration.configure(Database.class
-				.getResource("/hibernate.cfg.xml"));
+		configuration.configure(Database.class.getResource("/hibernate.cfg.xml"));
 		for (Table<?, ? extends Serializable> table : tables) {
 			if (table.getMappingXmlFile() == null) {
 				configuration.addAnnotatedClass(table.getEntityClass());
@@ -29,9 +28,7 @@ public class Database {
 				configuration.addFile(table.getMappingXmlFile());
 			}
 		}
-		ServiceRegistry serviceRegistry = new ServiceRegistryBuilder()
-				.applySettings(configuration.getProperties())
-				.buildServiceRegistry();
+		ServiceRegistry serviceRegistry = new ServiceRegistryBuilder().applySettings(configuration.getProperties()).buildServiceRegistry();
 		sessionFactory = configuration.buildSessionFactory(serviceRegistry);
 	}
 
@@ -39,22 +36,19 @@ public class Database {
 		return sessionFactory.getCurrentSession();
 	}
 
-	public static <T, PK extends Serializable> Table<T, PK> createTable(
-			Class<T> entityClass, PK idType) {
+	public static <T, PK extends Serializable> Table<T, PK> createTable(Class<T> entityClass, PK idType) {
 		Table<T, PK> table = new Table<T, PK>(entityClass);
 		tables.add(table);
 		return table;
 	}
 
-	public static <T, PK extends Serializable> Table<T, PK> createTable(
-			Class<T> entityClass, PK idType, File mappingXmlFile) {
+	public static <T, PK extends Serializable> Table<T, PK> createTable(Class<T> entityClass, PK idType, File mappingXmlFile) {
 		Table<T, PK> table = new Table<T, PK>(entityClass, mappingXmlFile);
 		tables.add(table);
 		return table;
 	}
 
-	public static <T, PK extends Serializable> Table<T, PK> createTable(
-			Class<T> entityClass, PK idType, String mappingXmlFileUrl) {
+	public static <T, PK extends Serializable> Table<T, PK> createTable(Class<T> entityClass, PK idType, String mappingXmlFileUrl) {
 		Table<T, PK> table = new Table<T, PK>(entityClass, mappingXmlFileUrl);
 		tables.add(table);
 		return table;
