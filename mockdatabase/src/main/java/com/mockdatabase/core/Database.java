@@ -12,6 +12,8 @@ import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.service.ServiceRegistryBuilder;
 
+import com.mockdatabase.exception.MockDatabaseException;
+
 public class Database {
 
 	private static List<Table<?, ? extends Serializable>> tables = new ArrayList<Table<?, ? extends Serializable>>();
@@ -33,22 +35,26 @@ public class Database {
 	}
 
 	protected static Session getSession() {
+		if (sessionFactory == null) {
+			MessageSource messageSource = MessageSource.getInstance();
+			throw new MockDatabaseException(messageSource.getMessage("com.mock.database.session.error"));
+		}
 		return sessionFactory.getCurrentSession();
 	}
 
-	public static <T, PK extends Serializable> Table<T, PK> createTable(Class<T> entityClass, PK idType) {
+	public static <T, PK extends Serializable> Table<T, PK> createTable(Class<T> entityClass, Class<PK> idType) {
 		Table<T, PK> table = new Table<T, PK>(entityClass);
 		tables.add(table);
 		return table;
 	}
 
-	public static <T, PK extends Serializable> Table<T, PK> createTable(Class<T> entityClass, PK idType, File mappingXmlFile) {
+	public static <T, PK extends Serializable> Table<T, PK> createTable(Class<T> entityClass, Class<PK> idType, File mappingXmlFile) {
 		Table<T, PK> table = new Table<T, PK>(entityClass, mappingXmlFile);
 		tables.add(table);
 		return table;
 	}
 
-	public static <T, PK extends Serializable> Table<T, PK> createTable(Class<T> entityClass, PK idType, String mappingXmlFileUrl) {
+	public static <T, PK extends Serializable> Table<T, PK> createTable(Class<T> entityClass, Class<PK> idType, String mappingXmlFileUrl) {
 		Table<T, PK> table = new Table<T, PK>(entityClass, mappingXmlFileUrl);
 		tables.add(table);
 		return table;
