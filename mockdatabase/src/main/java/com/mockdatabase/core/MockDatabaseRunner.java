@@ -38,10 +38,14 @@ public class MockDatabaseRunner extends BlockJUnit4ClassRunner {
 		try {
 			createDatabaseFile();
 			super.run(notifier);
+		} catch (MockDatabaseException e) {
+			testNotifier.addFailure(e);
 		} catch (IOException e) {
-			testNotifier.addFailure(new MockDatabaseException("An error ocurred while creating the database", e));
+			MessageSource messageSource = MessageSource.getInstance();
+			testNotifier.addFailure(new MockDatabaseException(messageSource.getMessage("com.mock.database.creation.error"), e));
 		} catch (Throwable e) {
-			testNotifier.addFailure(new MockDatabaseException("An error ocurred while starting the test", e));
+			MessageSource messageSource = MessageSource.getInstance();
+			testNotifier.addFailure(new MockDatabaseException(messageSource.getMessage("com.mock.database.run.error"), e));
 		} finally {
 			deleteDatabaseFiles();
 		}
@@ -61,7 +65,9 @@ public class MockDatabaseRunner extends BlockJUnit4ClassRunner {
 		}
 		String url = FilenameUtils.concat(USER_DIRECTORY, DATABASE_FILE_NAME);
 		File databaseFile = new File(url);
-		databaseFile.delete();
+		if (databaseFile.exists()) {
+			databaseFile.delete();
+		}
 	}
 
 	private void validate() throws InitializationError {
@@ -76,7 +82,8 @@ public class MockDatabaseRunner extends BlockJUnit4ClassRunner {
 	private void validateConfigureMethod(List<Throwable> errors) {
 		List<FrameworkMethod> methods = getTestClass().getAnnotatedMethods(Configure.class);
 		if (methods.size() > 1) {
-			errors.add(new MockDatabaseException("There can not be more than one method annotated with @Configure"));
+			MessageSource messageSource = MessageSource.getInstance();
+			errors.add(new MockDatabaseException(messageSource.getMessage("com.mock.database.configure.error")));
 		} else {
 			validatePublicVoidNoArgMethods(Configure.class, false, errors);
 		}
