@@ -2,6 +2,7 @@ package com.mockdatabase.core;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,16 +82,31 @@ public class MockDatabaseRunner extends BlockJUnit4ClassRunner {
 
 	private void validateConfigureMethod(List<Throwable> errors) {
 		List<FrameworkMethod> methods = getTestClass().getAnnotatedMethods(Configure.class);
-		if (methods.size() > 1) {
+		switch (methods.size()) {
+		case 0:
+			// No @Configure method is allowed.
+			break;
+		case 1:
+			validatePublicVoidNoArgMethods(Configure.class, false, errors);
+			validateConfigureMethodAnnotations(methods.get(0), errors);
+			break;
+		default:
 			MessageSource messageSource = MessageSource.getInstance();
 			errors.add(new MockDatabaseException(messageSource.getMessage("com.mock.database.configure.error")));
-		} else {
-			validatePublicVoidNoArgMethods(Configure.class, false, errors);
+			break;
 		}
 	}
 
 	private void validateRollbackMethods(List<Throwable> errors) {
 		validatePublicVoidNoArgMethods(Rollback.class, false, errors);
+	}
+
+	private void validateConfigureMethodAnnotations(FrameworkMethod method, List<Throwable> errors) {
+		Annotation[] annotations = method.getAnnotations();
+		if (annotations.length > 1) {
+			MessageSource messageSource = MessageSource.getInstance();
+			errors.add(new MockDatabaseException(messageSource.getMessage("com.mock.database.configure.annotations.error")));
+		}
 	}
 
 }
