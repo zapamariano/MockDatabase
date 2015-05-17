@@ -1,5 +1,6 @@
 package com.mockdatabase.core;
 
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -23,6 +24,10 @@ public class MessageSource {
 
 	public String getMessage(String key) {
 		return bundle.getString(key);
+	}
+
+	public String getMessage(String key, Object... arguments) {
+		return MessageFormat.format(getMessage(key), arguments);
 	}
 
 }
