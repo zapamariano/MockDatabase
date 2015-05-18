@@ -7,14 +7,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
+import org.junit.Ignore;
+import org.junit.internal.AssumptionViolatedException;
 import org.junit.internal.runners.model.EachTestNotifier;
+import org.junit.runner.Description;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.Statement;
 
 import com.mockdatabase.annotation.Configure;
 import com.mockdatabase.annotation.Rollback;
+import com.mockdatabase.annotation.Transaction;
 import com.mockdatabase.exception.MockDatabaseException;
 
 public class MockDatabaseRunner extends BlockJUnit4ClassRunner {
@@ -38,6 +43,7 @@ public class MockDatabaseRunner extends BlockJUnit4ClassRunner {
 		EachTestNotifier testNotifier = new EachTestNotifier(notifier, getDescription());
 		try {
 			createDatabaseFile();
+			buildDatabase();
 			super.run(notifier);
 		} catch (MockDatabaseException e) {
 			testNotifier.addFailure(e);
@@ -49,6 +55,37 @@ public class MockDatabaseRunner extends BlockJUnit4ClassRunner {
 			testNotifier.addFailure(new MockDatabaseException(messageSource.getMessage("com.mock.database.run.error"), e));
 		} finally {
 			deleteDatabaseFiles();
+		}
+	}
+
+	@Override
+	protected void runChild(final FrameworkMethod method, RunNotifier notifier) {
+		Description description = describeChild(method);
+		if (method.getAnnotation(Ignore.class) != null) {
+			notifier.fireTestIgnored(description);
+			return;
+		}
+		EachTestNotifier eachNotifier = new EachTestNotifier(notifier, description);
+		try {
+			eachNotifier.fireTestStarted();
+			Transaction transaction = method.getAnnotation(Transaction.class);
+			Database.configureSession(transaction);
+			Statement statement = methodBlock(method);
+			statement.evaluate();
+			Database.closeSession(transaction, method.getAnnotation(Rollback.class));
+		} catch (AssumptionViolatedException e) {
+			eachNotifier.addFailedAssumption(e);
+			Database.destroySession();
+		} catch (Throwable e) {
+			if (e instanceof MockDatabaseException) {
+				eachNotifier.addFailure(e);
+			} else {
+				MessageSource messageSource = MessageSource.getInstance();
+				eachNotifier.addFailure(new MockDatabaseException(messageSource.getMessage("com.mock.database.test.method.error"), e));
+			}
+			Database.destroySession();
+		} finally {
+			eachNotifier.fireTestFinished();
 		}
 	}
 
@@ -107,6 +144,16 @@ public class MockDatabaseRunner extends BlockJUnit4ClassRunner {
 			MessageSource messageSource = MessageSource.getInstance();
 			errors.add(new MockDatabaseException(messageSource.getMessage("com.mock.database.configure.annotations.error")));
 		}
+	}
+
+	private void buildDatabase() throws Throwable {
+		List<FrameworkMethod> methods = getTestClass().getAnnotatedMethods(Configure.class);
+		if (methods.isEmpty()) {
+			return;
+		}
+		Object instance = getTestClass().getJavaClass().newInstance();
+		methods.get(0).invokeExplosively(instance);
+		Database.build();
 	}
 
 }

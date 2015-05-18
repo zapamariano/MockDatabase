@@ -12,16 +12,16 @@ public class Table<T, PK extends Serializable> {
 
 	private File mappingXmlFile;
 
-	public Table(Class<T> entityClass) {
+	protected Table(Class<T> entityClass) {
 		this.entityClass = entityClass;
 	}
 
-	public Table(Class<T> entityClass, File mappingXmlFile) {
+	protected Table(Class<T> entityClass, File mappingXmlFile) {
 		this.entityClass = entityClass;
 		this.mappingXmlFile = mappingXmlFile;
 	}
 
-	public Table(Class<T> entityClass, String mappingXmlFileUrl) {
+	protected Table(Class<T> entityClass, String mappingXmlFileUrl) {
 		this(entityClass, new File(mappingXmlFileUrl));
 	}
 

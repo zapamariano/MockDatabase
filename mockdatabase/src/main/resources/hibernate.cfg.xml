@@ -30,6 +30,9 @@
   		
   		<!-- Update the changes to the database schema on startup -->
   		<property name="hibernate.hbm2ddl.auto">update</property>
+  		
+  		<!-- Disable auto-commit. Framework deals with this -->
+  		<property name="hibernate.connection.autocommit">false</property>
     </session-factory>
 
 </hibernate-configuration>

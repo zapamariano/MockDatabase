@@ -1,17 +1,23 @@
 package com.mockdatabase.core;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.service.ServiceRegistryBuilder;
 
+import com.google.common.io.Files;
+import com.mockdatabase.annotation.Rollback;
 import com.mockdatabase.exception.MockDatabaseException;
 
 public class Database {
@@ -40,6 +46,36 @@ public class Database {
 			throw new MockDatabaseException(messageSource.getMessage("com.mock.database.session.error"));
 		}
 		return sessionFactory.getCurrentSession();
+	}
+
+	protected static void configureSession(com.mockdatabase.annotation.Transaction transactionAnnotation) {
+		Session session = sessionFactory.openSession();
+		session.setFlushMode(FlushMode.MANUAL);
+		Transaction transaction = session.beginTransaction();
+		if (transactionAnnotation != null && transactionAnnotation.timeout() >= 0) {
+			transaction.setTimeout(transactionAnnotation.timeout());
+		}
+	}
+
+	protected static void closeSession(com.mockdatabase.annotation.Transaction transactionAnnotation, Rollback rollbackAnnotation) {
+		if (rollbackAnnotation != null) {
+			destroySession();
+			return;
+		}
+		if (transactionAnnotation != null && transactionAnnotation.readOnly()) {
+			destroySession();
+			return;
+		}
+		Session session = getSession();
+		session.flush();
+		session.getTransaction().commit();
+		session.close();
+	}
+
+	protected static void destroySession() {
+		Session session = getSession();
+		session.getTransaction().rollback();
+		session.close();
 	}
 
 	public static <T, PK extends Serializable> Table<T, PK> createTable(Class<T> entityClass, Class<PK> idType) {
@@ -96,6 +132,45 @@ public class Database {
 
 	public static int executeUpdateSQL(String SQLQuery) {
 		return getSession().createSQLQuery(SQLQuery).executeUpdate();
+	}
+
+	public static int runScriptHQL(File file, Charset encoding) {
+		try {
+			String script= readFile(file, encoding);
+			return executeUpdateHQL(script);
+		} catch (IOException e) {
+			MessageSource messageSource = MessageSource.getInstance();
+			String message = messageSource.getMessage("com.mock.database.script.hql.error", file.getName());
+			throw new MockDatabaseException(message, e);
+		}
+	}
+
+	public static int runScriptHQL(String path, Charset encoding) {
+		return runScriptHQL(new File(path), encoding);
+	}
+
+	public static int runScriptSQL(File file, Charset encoding) {
+		try {
+			String script = readFile(file, encoding);
+			return executeUpdateSQL(script);
+		} catch (IOException e) {
+			MessageSource messageSource = MessageSource.getInstance();
+			String message = messageSource.getMessage("com.mock.database.script.sql.error", file.getName());
+			throw new MockDatabaseException(message, e);
+		}
+	}
+
+	public static int runScriptSQL(String path, Charset encoding) {
+		return runScriptSQL(new File(path), encoding);
+	}
+
+	private static String readFile(File file, Charset encoding) throws IOException {
+		String data = Files.toString(file, encoding);
+		data = data.trim();
+		if (!data.startsWith("begin") && !data.startsWith("BEGIN")) {
+			data = "BEGIN " + data + " END;";
+		}
+		return data;
 	}
 
 }
